@@ -50,6 +50,8 @@ def load_data(filepath:str) -> dict:
 # =================================================================
 # creating mesh/object
 
+# -- break elements into edges
+
 def break_hex8_into_edges(hex8_feb) -> list:
     """
         Breaks down a hex8 element into list of edges.
@@ -85,6 +87,8 @@ def create_edges_from_elements(elements) -> list:
         else:
             print("non-hex8 found. will need to add method for cell of length: {}".format(len(cell)))
     return edges
+
+# -- break elements into faces
 
 def break_hex8_into_faces(hex8_feb) -> list:
     """
@@ -150,7 +154,8 @@ def create_faces_from_elements(elements) -> list:
         else:
             print("non-hex8 found. will need to add method for cell of length: {}".format(len(cell)))
     return faces
-    
+
+# -- create new object
     
 def create_new_object_from_data(name, data):
     # import modules
