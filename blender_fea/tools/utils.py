@@ -96,9 +96,7 @@ def break_hex8_into_faces(hex8_feb) -> list:
 
         reference: https://help.febio.org/FEBio/FEBio_um_2_9/FEBio_um_2-9-3.8.2.1.html
     """
-    
-    # https://help.febio.org/FEBio/FEBio_um_2_9/FEBio_um_2-9-3.8.2.1.html
-    
+        
     faces = [
         # bottom
         [
