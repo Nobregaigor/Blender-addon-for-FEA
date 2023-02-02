@@ -24,16 +24,22 @@ def load_data(filepath:str) -> dict:
     # assert filepath.endswith('.json'), ValueError(
     #     "Expected .json file. received: {}".format(filepath))
     # check if file exists
-    
     assert os.path.exists(filepath), ValueError(
         "Filepath provided does not exist: {}".format(filepath))
     # check if path is file (not a directory)
     assert os.path.isfile(filepath), ValueError(
         "Filepath is not a file: {}".format(filepath))
     
-    # open and read json file
-    with open(filepath, "r") as jfile:
-        data = json.load(jfile)
+    # open and read file
+    if filepath.endswith('.json'): # read json file
+        with open(filepath, "r") as jfile:
+            data = json.load(jfile)
+    elif filepath.endswith('.p'): # read pickle file
+        import pickle
+        with open(filepath, "rb") as pfile:
+            data = pickle.load(pfile)
+    else:
+        raise ValueError(f"File extension not supported: {filepath}")
     
     # we expect NODES and ELEMENTS to be in data
     assert "NODES" in data, ValueError(
@@ -43,7 +49,19 @@ def load_data(filepath:str) -> dict:
 
     # convert nodes and elements to numpy arrays
     data["NODES"] = np.array(data["NODES"])
-    data["ELEMENTS"] = np.array(data["ELEMENTS"])
+    
+    # check for element dict
+    elems = data["ELEMENTS"]
+    if isinstance(elems, list): # check if element is a list
+        data["ELEMENTS"] = np.array(elems)
+    elif isinstance(elems, dict): # check if element is a dictionary
+        if not "HEXAHEDRON" in elems:
+            raise ValueError("File does not contain HEXAHEDRON elements. We currently only support HEXAHEDRON elements.")
+        data["ELEMENTS"] = np.array(elems["HEXAHEDRON"])
+    
+    print(f"Nodes shape: {data['NODES'].shape}")
+    print(f"Elements shape: {data['ELEMENTS'].shape}")
+    
     
     return data
 
@@ -170,7 +188,7 @@ def create_new_object_from_data(name, data):
     # add mesh data
     
     # set mesh edges based on elements
-    elems = data["ELEMENTS"][0]
+    elems = data["ELEMENTS"]
     # check if elements has an additional dimension (supposed to be 8, but it can include elements id)
     if elems.shape[-1] == 9:
         elems = elems[:, 1:]
@@ -197,3 +215,26 @@ def create_new_object_from_data(name, data):
     mesh.from_pydata(data["NODES"], edges, faces)
     
     return mesh
+
+def add_keyframes_from_sim(scene_obj, data):
+    import numpy as np
+    # get data
+    timesteps = data["STATES"]["timesteps"]
+    initial_state = data["NODES"]
+    displacement = data["STATES"]["data"]["displacement"]
+        
+    # compute new vertex data
+    vertex_data = initial_state + displacement
+    
+    # select number of keyframes and number of nodes
+    n_keyframes, n_nodes, _ = vertex_data.shape
+        
+    for i in range(n_keyframes):
+        if i == 2:
+            break
+        # bpy.context.scene.frame_set(i)
+        for j in range(n_nodes):
+            scene_obj.data.vertices[j].co = vertex_data[i][j]
+            scene_obj.data.vertices[j].keyframe_insert(data_path="co", frame=i)    
+
+    

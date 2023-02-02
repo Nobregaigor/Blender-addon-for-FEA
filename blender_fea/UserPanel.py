@@ -27,6 +27,8 @@ class UserPanel(bpy.types.Panel):
         layout.prop(fea_props, "filepath")
         # 
         layout.operator("blender_fea.load_static_mesh")
+        layout.operator("blender_fea.load_simulation")
+        
         
 
 def register():
